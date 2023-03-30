@@ -561,20 +561,27 @@
                         this.inverted);
                 }
 
+                console.log(this.horizon.lettres);
+
                 // Check for collisions.
-                var collisionObstacles = hasObstacles &&
+                const collisionObstacles = hasObstacles &&
                     checkForCollision(this.horizon.obstacles[0], this.tRex);
                 const collisionLettres = hasObstacles &&
                     checkForCollision(this.horizon.lettres[0], this.tRex)
 
-                if (!collisionObstacles) {
+                if (collisionObstacles) {
+                    this.gameOver();
+                } else if (collisionLettres && !this.horizon.lettres[0].estEcrite) {
+                    const previousValue = document.getElementById('login-input').value;
+                    console.log(previousValue);
+                    document.getElementById('login-input').value = previousValue + this.horizon.lettres[0].typeConfig.type;
+                    this.horizon.lettres[0].estEcrite = true;
+                } else {
                     this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
 
                     if (this.currentSpeed < this.config.MAX_SPEED) {
                         this.currentSpeed += this.config.ACCELERATION;
                     }
-                } else {
-                    this.gameOver();
                 }
 
                 var playAchievementSound = this.distanceMeter.update(deltaTime,
@@ -1133,66 +1140,7 @@
 
 
     //******************************************************************************
-
-    /**
-     * Check for a collision.
-     * @param {!Obstacle} obstacle
-     * @param {!Trex} tRex T-rex object.
-     * @param {HTMLCanvasContext} opt_canvasCtx Optional canvas context for drawing
-     *    collision boxes.
-     * @return {Array<CollisionBox>}
-     */
-    function checkForCollision(obstacle, tRex, opt_canvasCtx) {
-        var obstacleBoxXPos = Runner.defaultDimensions.WIDTH + obstacle.xPos;
-
-        // Adjustments are made to the bounding box as there is a 1 pixel white
-        // border around the t-rex and obstacles.
-        var tRexBox = new CollisionBox(
-            tRex.xPos + 1,
-            tRex.yPos + 1,
-            tRex.config.WIDTH - 2,
-            tRex.config.HEIGHT - 2);
-
-        var obstacleBox = new CollisionBox(
-            obstacle.xPos + 1,
-            obstacle.yPos + 1,
-            obstacle.typeConfig.width * obstacle.size - 2,
-            obstacle.typeConfig.height - 2);
-
-        // Debug outer box
-        if (opt_canvasCtx) {
-            drawCollisionBoxes(opt_canvasCtx, tRexBox, obstacleBox);
-        }
-
-        // Simple outer bounds check.
-        if (boxCompare(tRexBox, obstacleBox)) {
-            var collisionBoxes = obstacle.collisionBoxes;
-            var tRexCollisionBoxes = tRex.ducking ?
-                Trex.collisionBoxes.DUCKING : Trex.collisionBoxes.RUNNING;
-
-            // Detailed axis aligned box check.
-            for (var t = 0; t < tRexCollisionBoxes.length; t++) {
-                for (var i = 0; i < collisionBoxes.length; i++) {
-                    // Adjust the box to actual positions.
-                    var adjTrexBox =
-                        createAdjustedCollisionBox(tRexCollisionBoxes[t], tRexBox);
-                    var adjObstacleBox =
-                        createAdjustedCollisionBox(collisionBoxes[i], obstacleBox);
-                    var crashed = boxCompare(adjTrexBox, adjObstacleBox);
-
-                    // Draw boxes for debug.
-                    if (opt_canvasCtx) {
-                        drawCollisionBoxes(opt_canvasCtx, adjTrexBox, adjObstacleBox);
-                    }
-
-                    if (crashed) {
-                        return [adjTrexBox, adjObstacleBox];
-                    }
-                }
-            }
-        }
-        return false;
-    };
+    ;
 
     /**
      * Check for a collision.
@@ -1558,6 +1506,8 @@
         this.currentFrame = 0;
         this.timer = 0;
 
+        this.estEcrite = false;
+
         this.init(speed);
     }
 
@@ -1766,7 +1716,7 @@
     Lettre.types = [
         {
             type: 'A',
-            width: 17,
+            width: 30,
             height: 35,
             yPos: 105,
             multipleSpeed: 4,
