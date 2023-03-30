@@ -117,7 +117,7 @@
         MAX_BLINK_COUNT: 3,
         MAX_CLOUDS: 6,
         MAX_OBSTACLE_LENGTH: 3,
-        MAX_OBSTACLE_DUPLICATION: 2,
+        MAX_OBSTACLE_DUPLICATION: 1,
         MAX_SPEED: 13,
         MIN_JUMP_HEIGHT: 35,
         MOBILE_SPEED_COEFFICIENT: 1.2,
@@ -296,6 +296,8 @@
                 Runner.imageSprite = document.getElementById('offline-resources-1x');
                 this.spriteDef = Runner.spriteDefinition.LDPI;
             }
+
+            Runner.imagesLettre = new Map([['A', document.getElementById('imageA')]]);
 
             if (Runner.imageSprite.complete) {
                 this.init();
@@ -560,10 +562,12 @@
                 }
 
                 // Check for collisions.
-                var collision = hasObstacles &&
+                var collisionObstacles = hasObstacles &&
                     checkForCollision(this.horizon.obstacles[0], this.tRex);
+                const collisionLettres = hasObstacles &&
+                    checkForCollision(this.horizon.lettres[0], this.tRex)
 
-                if (!collision) {
+                if (!collisionObstacles) {
                     this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
 
                     if (this.currentSpeed < this.config.MAX_SPEED) {
@@ -1190,6 +1194,66 @@
         return false;
     };
 
+    /**
+     * Check for a collision.
+     * @param {!Obstacle} obstacle
+     * @param {!Trex} tRex T-rex object.
+     * @param {HTMLCanvasContext} opt_canvasCtx Optional canvas context for drawing
+     *    collision boxes.
+     * @return {Array<CollisionBox>}
+     */
+    function checkForCollision(obstacle, tRex, opt_canvasCtx) {
+        var obstacleBoxXPos = Runner.defaultDimensions.WIDTH + obstacle.xPos;
+
+        // Adjustments are made to the bounding box as there is a 1 pixel white
+        // border around the t-rex and obstacles.
+        var tRexBox = new CollisionBox(
+            tRex.xPos + 1,
+            tRex.yPos + 1,
+            tRex.config.WIDTH - 2,
+            tRex.config.HEIGHT - 2);
+
+        var obstacleBox = new CollisionBox(
+            obstacle.xPos + 1,
+            obstacle.yPos + 1,
+            obstacle.typeConfig.width * obstacle.size - 2,
+            obstacle.typeConfig.height - 2);
+
+        // Debug outer box
+        if (opt_canvasCtx) {
+            drawCollisionBoxes(opt_canvasCtx, tRexBox, obstacleBox);
+        }
+
+        // Simple outer bounds check.
+        if (boxCompare(tRexBox, obstacleBox)) {
+            var collisionBoxes = obstacle.collisionBoxes;
+            var tRexCollisionBoxes = tRex.ducking ?
+                Trex.collisionBoxes.DUCKING : Trex.collisionBoxes.RUNNING;
+
+            // Detailed axis aligned box check.
+            for (var t = 0; t < tRexCollisionBoxes.length; t++) {
+                for (var i = 0; i < collisionBoxes.length; i++) {
+                    // Adjust the box to actual positions.
+                    var adjTrexBox =
+                        createAdjustedCollisionBox(tRexCollisionBoxes[t], tRexBox);
+                    var adjObstacleBox =
+                        createAdjustedCollisionBox(collisionBoxes[i], obstacleBox);
+                    var crashed = boxCompare(adjTrexBox, adjObstacleBox);
+
+                    // Draw boxes for debug.
+                    if (opt_canvasCtx) {
+                        drawCollisionBoxes(opt_canvasCtx, adjTrexBox, adjObstacleBox);
+                    }
+
+                    if (crashed) {
+                        return [adjTrexBox, adjObstacleBox];
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
 
     /**
      * Adjust the collision box.
@@ -1458,6 +1522,189 @@
         };
 
 
+
+
+    //******************************************************************************
+
+    /**
+     * Obstacle.
+     * @param {HTMLCanvasCtx} canvasCtx
+     * @param {Obstacle.type} type
+     * @param {Object} spritePos Obstacle position in sprite.
+     * @param {Object} dimensions
+     * @param {number} gapCoefficient Mutipler in determining the gap.
+     * @param {number} speed
+     * @param {number} opt_xOffset
+     */
+    function Lettre(canvasCtx, type, spriteImgPos, dimensions,
+                      gapCoefficient, speed, opt_xOffset) {
+
+        this.canvasCtx = canvasCtx;
+        this.spritePos = spriteImgPos;
+        console.log(type);
+        this.typeConfig = type;
+        this.gapCoefficient = gapCoefficient;
+        this.size = getRandomNum(1, Obstacle.MAX_OBSTACLE_LENGTH);
+        this.dimensions = dimensions;
+        this.remove = false;
+        this.xPos = dimensions.WIDTH + (opt_xOffset || 0);
+        this.yPos = 0;
+        this.width = 0;
+        this.collisionBoxes = [];
+        this.gap = 0;
+        this.speedOffset = 0;
+
+        // For animated obstacles.
+        this.currentFrame = 0;
+        this.timer = 0;
+
+        this.init(speed);
+    }
+
+    /**
+     * Coefficient for calculating the maximum gap.
+     * @const
+     */
+    Lettre.MAX_GAP_COEFFICIENT = 1.5;
+
+    /**
+     * Maximum obstacle grouping count.
+     * @const
+     */
+    Lettre.MAX_OBSTACLE_LENGTH = 1;
+
+    Lettre.prototype = {
+        /**
+         * Initialise the DOM for the obstacle.
+         * @param {number} speed
+         */
+        init: function (speed) {
+            this.cloneCollisionBoxes();
+
+            // Only allow sizing if we're at the right speed.
+            if (this.size > 1 && this.typeConfig.multipleSpeed > speed) {
+                this.size = 1;
+            }
+
+            this.width = this.typeConfig.width * this.size;
+
+            // Check if obstacle can be positioned at various heights.
+            if (Array.isArray(this.typeConfig.yPos)) {
+                var yPosConfig = IS_MOBILE ? this.typeConfig.yPosMobile :
+                    this.typeConfig.yPos;
+                this.yPos = yPosConfig[getRandomNum(0, yPosConfig.length - 1)];
+            } else {
+                this.yPos = this.typeConfig.yPos;
+            }
+
+            this.draw();
+
+            // For obstacles that go at a different speed from the horizon.
+            if (this.typeConfig.speedOffset) {
+                this.speedOffset = Math.random() > 0.5 ? this.typeConfig.speedOffset :
+                    -this.typeConfig.speedOffset;
+            }
+
+            this.gap = this.getGap(this.gapCoefficient, speed);
+        },
+
+        /**
+         * Draw and crop based on size.
+         */
+        draw: function () {
+            var sourceWidth = this.typeConfig.width;
+            var sourceHeight = this.typeConfig.height;
+
+            if (IS_HIDPI) {
+                sourceWidth = sourceWidth * 2;
+                sourceHeight = sourceHeight * 2;
+            }
+
+            // X position in sprite.
+            var sourceX = (sourceWidth * this.size) * (0.5 * (this.size - 1)) +
+                this.spritePos.x;
+
+            // Animation frames.
+            if (this.currentFrame > 0) {
+                sourceX += sourceWidth * this.currentFrame;
+            }
+
+            // TODO
+            this.canvasCtx.drawImage(Runner.imagesLettre.get(this.typeConfig.type),
+                sourceX, this.spritePos.y,
+                sourceWidth * this.size, sourceHeight,
+                this.xPos, this.yPos,
+                this.typeConfig.width * this.size, this.typeConfig.height);
+        },
+
+        /**
+         * Obstacle frame update.
+         * @param {number} deltaTime
+         * @param {number} speed
+         */
+        update: function (deltaTime, speed) {
+            if (!this.remove) {
+                if (this.typeConfig.speedOffset) {
+                    speed += this.speedOffset;
+                }
+                this.xPos -= Math.floor((speed * FPS / 1000) * deltaTime);
+
+                // Update frame
+                if (this.typeConfig.numFrames) {
+                    this.timer += deltaTime;
+                    if (this.timer >= this.typeConfig.frameRate) {
+                        this.currentFrame =
+                            this.currentFrame == this.typeConfig.numFrames - 1 ?
+                                0 : this.currentFrame + 1;
+                        this.timer = 0;
+                    }
+                }
+                this.draw();
+
+                if (!this.isVisible()) {
+                    this.remove = true;
+                }
+            }
+        },
+
+        /**
+         * Calculate a random gap size.
+         * - Minimum gap gets wider as speed increses
+         * @param {number} gapCoefficient
+         * @param {number} speed
+         * @return {number} The gap size.
+         */
+        getGap: function (gapCoefficient, speed) {
+            var minGap = Math.round(this.width * speed +
+                this.typeConfig.minGap * gapCoefficient);
+            var maxGap = Math.round(minGap * Obstacle.MAX_GAP_COEFFICIENT);
+            return getRandomNum(minGap, maxGap);
+        },
+
+        /**
+         * Check if obstacle is visible.
+         * @return {boolean} Whether the obstacle is in the game area.
+         */
+        isVisible: function () {
+            return this.xPos + this.width > 0;
+        },
+
+        /**
+         * Make a copy of the collision boxes, since these will change based on
+         * obstacle type and size.
+         */
+        cloneCollisionBoxes: function () {
+            var collisionBoxes = this.typeConfig.collisionBoxes;
+
+            for (var i = collisionBoxes.length - 1; i >= 0; i--) {
+                this.collisionBoxes[i] = new CollisionBox(collisionBoxes[i].x,
+                    collisionBoxes[i].y, collisionBoxes[i].width,
+                    collisionBoxes[i].height);
+            }
+        }
+    };
+
+
     /**
      * Obstacle definitions.
      * minGap: minimum pixel space betweeen obstacles.
@@ -1480,41 +1727,56 @@
                 new CollisionBox(10, 4, 7, 14)
             ]
         },
+        // {
+        //     type: 'CACTUS_LARGE',
+        //     width: 25,
+        //     height: 50,
+        //     yPos: 90,
+        //     multipleSpeed: 7,
+        //     minGap: 120,
+        //     minSpeed: 0,
+        //     collisionBoxes: [
+        //         new CollisionBox(0, 12, 7, 38),
+        //         new CollisionBox(8, 0, 7, 49),
+        //         new CollisionBox(13, 10, 10, 38)
+        //     ]
+        // },
+        // {
+        //     type: 'PTERODACTYL',
+        //     width: 46,
+        //     height: 40,
+        //     yPos: [100, 75, 50], // Variable height.
+        //     yPosMobile: [100, 50], // Variable height mobile.
+        //     multipleSpeed: 999,
+        //     minSpeed: 8.5,
+        //     minGap: 150,
+        //     collisionBoxes: [
+        //         new CollisionBox(15, 15, 16, 5),
+        //         new CollisionBox(18, 21, 24, 6),
+        //         new CollisionBox(2, 14, 4, 3),
+        //         new CollisionBox(6, 10, 4, 7),
+        //         new CollisionBox(10, 8, 6, 9)
+        //     ],
+        //     numFrames: 2,
+        //     frameRate: 1000 / 6,
+        //     speedOffset: .8
+        // },
+    ];
+
+    Lettre.types = [
         {
-            type: 'CACTUS_LARGE',
-            width: 25,
-            height: 50,
-            yPos: 90,
-            multipleSpeed: 7,
+            type: 'A',
+            width: 17,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
             minGap: 120,
             minSpeed: 0,
             collisionBoxes: [
-                new CollisionBox(0, 12, 7, 38),
-                new CollisionBox(8, 0, 7, 49),
-                new CollisionBox(13, 10, 10, 38)
+                new CollisionBox(0, 0, 7, 27)
             ]
-        },
-        {
-            type: 'PTERODACTYL',
-            width: 46,
-            height: 40,
-            yPos: [100, 75, 50], // Variable height.
-            yPosMobile: [100, 50], // Variable height mobile.
-            multipleSpeed: 999,
-            minSpeed: 8.5,
-            minGap: 150,
-            collisionBoxes: [
-                new CollisionBox(15, 15, 16, 5),
-                new CollisionBox(18, 21, 24, 6),
-                new CollisionBox(2, 14, 4, 3),
-                new CollisionBox(6, 10, 4, 7),
-                new CollisionBox(10, 8, 6, 9)
-            ],
-            numFrames: 2,
-            frameRate: 1000 / 6,
-            speedOffset: .8
         }
-    ];
+    ]
 
 
     //******************************************************************************
@@ -2540,7 +2802,9 @@
         this.dimensions = dimensions;
         this.gapCoefficient = gapCoefficient;
         this.obstacles = [];
+        this.lettres = [];
         this.obstacleHistory = [];
+        this.lettreHistory = [];
         this.horizonOffsets = [0, 0];
         this.cloudFrequency = this.config.CLOUD_FREQUENCY;
         this.spritePos = spritePos;
@@ -2596,6 +2860,7 @@
 
             if (updateObstacles) {
                 this.updateObstacles(deltaTime, currentSpeed);
+                this.updateLettres(deltaTime, currentSpeed);
             }
         },
 
@@ -2667,6 +2932,37 @@
             }
         },
 
+        updateLettres: function (deltaTime, currentSpeed) {
+            // Obstacles, move to Horizon layer.
+            const updatedLettres = this.lettres.slice(0);
+
+            for (let i = 0; i < this.lettres.length; i++) {
+                const lettre = this.lettres[i];
+                lettre.update(deltaTime, currentSpeed);
+
+                // Clean up existing obstacles.
+                if (lettre.remove) {
+                    updatedLettres.shift();
+                }
+            }
+            this.lettres = updatedLettres;
+
+            if (this.lettres.length > 0) {
+                const lastLettre = this.lettres[this.lettres.length - 1];
+
+                if (lastLettre && !lastLettre.followingLettreCreated &&
+                    lastLettre.isVisible() &&
+                    (lastLettre.xPos + lastLettre.width + lastLettre.gap) <
+                    this.dimensions.WIDTH) {
+                    this.addNewLettre(currentSpeed);
+                    lastLettre.followingLettreCreated = true;
+                }
+            } else {
+                // Create new obstacles.
+                this.addNewLettre(currentSpeed);
+            }
+        },
+
         removeFirstObstacle: function () {
             this.obstacles.shift();
         },
@@ -2676,15 +2972,12 @@
          * @param {number} currentSpeed
          */
         addNewObstacle: function (currentSpeed) {
-            var obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
-            var obstacleType = Obstacle.types[obstacleTypeIndex];
+            const obstacleTypeIndex = getRandomNum(0, Obstacle.types.length - 1);
+            const obstacleType = Obstacle.types[obstacleTypeIndex];
 
             // Check for multiples of the same type of obstacle.
             // Also check obstacle is available at current speed.
-            if (this.duplicateObstacleCheck(obstacleType.type) ||
-                currentSpeed < obstacleType.minSpeed) {
-                this.addNewObstacle(currentSpeed);
-            } else {
+
                 var obstacleSpritePos = this.spritePos[obstacleType.type];
 
                 this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
@@ -2696,7 +2989,30 @@
                 if (this.obstacleHistory.length > 1) {
                     this.obstacleHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
                 }
-            }
+
+        },
+
+        /**
+         * Add a new obstacle.
+         * @param {number} currentSpeed
+         */
+        addNewLettre: function (currentSpeed) {
+            const lettreTypeIndex = getRandomNum(0, Lettre.types.length - 1);
+            const lettreType = Lettre.types[lettreTypeIndex];
+
+
+                const lettreSpritePos = { x: 0, y: 0 };
+
+                this.lettres.push(new Lettre(this.canvasCtx, lettreType,
+                    lettreSpritePos, this.dimensions,
+                    this.gapCoefficient, currentSpeed, lettreType.width));
+
+                this.lettreHistory.unshift(lettreType.type);
+
+                if (this.lettreHistory.length > 1) {
+                    this.lettreHistory.splice(Runner.config.MAX_OBSTACLE_DUPLICATION);
+                }
+
         },
 
         /**
@@ -2715,11 +3031,30 @@
         },
 
         /**
+         * Returns whether the previous two obstacles are the same as the next one.
+         * Maximum duplication is set in config value MAX_OBSTACLE_DUPLICATION.
+         * @return {boolean}
+         */
+        duplicateLettreCheck: function (nextLettreType) {
+            console.log(nextLettreType);
+            var duplicateCount = 0;
+
+            console.log(this.lettreHistory);
+
+            for (var i = 0; i < this.lettreHistory.length; i++) {
+                duplicateCount = this.lettreHistory[i] == nextLettreType ?
+                    duplicateCount + 1 : 0;
+            }
+            return duplicateCount >= Runner.config.MAX_OBSTACLE_DUPLICATION;
+        },
+
+        /**
          * Reset the horizon layer.
          * Remove existing obstacles and reposition the horizon line.
          */
         reset: function () {
             this.obstacles = [];
+            this.lettres = [];
             this.horizonLine.reset();
             this.nightMode.reset();
         },
