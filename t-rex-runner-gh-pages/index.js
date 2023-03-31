@@ -297,7 +297,35 @@
                 this.spriteDef = Runner.spriteDefinition.LDPI;
             }
 
-            Runner.imagesLettre = new Map([['A', document.getElementById('imageA')]]);
+            Runner.imagesLettre = new Map(
+                [
+                    ['A', document.getElementById('imageA')],
+                    ['B', document.getElementById('imageB')],
+                    ['C', document.getElementById('imageC')],
+                    ['D', document.getElementById('imageD')],
+                    ['E', document.getElementById('imageE')],
+                    ['F', document.getElementById('imageF')],
+                    ['G', document.getElementById('imageG')],
+                    ['H', document.getElementById('imageH')],
+                    ['I', document.getElementById('imageI')],
+                    ['J', document.getElementById('imageJ')],
+                    ['K', document.getElementById('imageK')],
+                    ['L', document.getElementById('imageL')],
+                    ['M', document.getElementById('imageM')],
+                    ['N', document.getElementById('imageN')],
+                    ['O', document.getElementById('imageO')],
+                    ['P', document.getElementById('imageP')],
+                    ['Q', document.getElementById('imageQ')],
+                    ['R', document.getElementById('imageR')],
+                    ['S', document.getElementById('imageS')],
+                    ['T', document.getElementById('imageT')],
+                    ['U', document.getElementById('imageU')],
+                    ['V', document.getElementById('imageV')],
+                    ['W', document.getElementById('imageW')],
+                    ['X', document.getElementById('imageX')],
+                    ['Y', document.getElementById('imageY')],
+                    ['Z', document.getElementById('imageZ')]
+                ]);
 
             if (Runner.imageSprite.complete) {
                 this.init();
@@ -561,8 +589,6 @@
                         this.inverted);
                 }
 
-                console.log(this.horizon.lettres);
-
                 // Check for collisions.
                 const collisionObstacles = hasObstacles &&
                     checkForCollision(this.horizon.obstacles[0], this.tRex);
@@ -573,7 +599,6 @@
                     this.gameOver();
                 } else if (collisionLettres && !this.horizon.lettres[0].estEcrite) {
                     const previousValue = document.getElementById('login-input').value;
-                    console.log(previousValue);
                     document.getElementById('login-input').value = previousValue + this.horizon.lettres[0].typeConfig.type;
                     this.horizon.lettres[0].estEcrite = true;
                 } else {
@@ -1489,7 +1514,6 @@
 
         this.canvasCtx = canvasCtx;
         this.spritePos = spriteImgPos;
-        console.log(type);
         this.typeConfig = type;
         this.gapCoefficient = gapCoefficient;
         this.size = getRandomNum(1, Obstacle.MAX_OBSTACLE_LENGTH);
@@ -1579,9 +1603,8 @@
                 sourceX += sourceWidth * this.currentFrame;
             }
 
-            // TODO
             this.canvasCtx.drawImage(Runner.imagesLettre.get(this.typeConfig.type),
-                sourceX, this.spritePos.y,
+                0, 0,
                 sourceWidth * this.size, sourceHeight,
                 this.xPos, this.yPos,
                 this.typeConfig.width * this.size, this.typeConfig.height);
@@ -1723,7 +1746,319 @@
             minGap: 120,
             minSpeed: 0,
             collisionBoxes: [
-                new CollisionBox(0, 0, 7, 27)
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'B',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'C',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'D',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'E',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'F',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'G',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'H',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'I',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'J',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'K',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'L',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'M',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'N',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'O',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'P',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'Q',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'R',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'R',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'S',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'T',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'U',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'V',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'W',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'X',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'Y',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
+            ]
+        },
+        {
+            type: 'Z',
+            width: 30,
+            height: 35,
+            yPos: 105,
+            multipleSpeed: 4,
+            minGap: 120,
+            minSpeed: 0,
+            collisionBoxes: [
+                new CollisionBox(0, 0, 25, 30)
             ]
         }
     ]
@@ -2986,10 +3321,7 @@
          * @return {boolean}
          */
         duplicateLettreCheck: function (nextLettreType) {
-            console.log(nextLettreType);
             var duplicateCount = 0;
-
-            console.log(this.lettreHistory);
 
             for (var i = 0; i < this.lettreHistory.length; i++) {
                 duplicateCount = this.lettreHistory[i] == nextLettreType ?
