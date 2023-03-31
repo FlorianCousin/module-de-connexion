@@ -1603,11 +1603,7 @@
                 sourceX += sourceWidth * this.currentFrame;
             }
 
-            this.canvasCtx.drawImage(Runner.imagesLettre.get(this.typeConfig.type),
-                0, 0,
-                sourceWidth * this.size, sourceHeight,
-                this.xPos, this.yPos,
-                this.typeConfig.width * this.size, this.typeConfig.height);
+            this.canvasCtx.drawImage(Runner.imagesLettre.get(this.typeConfig.type), this.xPos, this.yPos);
         },
 
         /**
